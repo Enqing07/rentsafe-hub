@@ -5,7 +5,7 @@ import { StatusBadge } from '@/components/StatusBadge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { mockProperties, mockApplications, mockContracts, mockEscrows } from '@/data/mockData';
-import { Building2, Users, FileText, Wallet, Plus, ArrowRight, TrendingUp, Filter, Shield, Image } from 'lucide-react';
+import { Building2, Users, FileText, Wallet, Plus, ArrowRight, Filter, Shield, Image } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 
 export default function LandlordDashboard() {
@@ -32,7 +32,6 @@ export default function LandlordDashboard() {
   const escrowRequests = mockEscrows.filter((e) => e.landlordIc === '800515-01-5678');
 
   const totalEscrowAmount = securedEscrows.reduce((sum, e) => sum + e.amount, 0);
-  const monthlyIncome = activeContracts.reduce((sum, c) => sum + c.monthlyRent, 0);
   const filteredApplications = landlordApplications.filter((app) =>
     applicationFilter === 'all' ? true : app.status === applicationFilter
   );
@@ -86,29 +85,6 @@ export default function LandlordDashboard() {
             Add New Property
           </Button>
         </div>
-
-        {/* Income Overview */}
-        <Card className="border-accent/20 bg-gradient-to-r from-accent/5 to-transparent">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground flex items-center gap-2">
-                  <TrendingUp className="h-4 w-4" />
-                  Monthly Rental Income
-                </p>
-                <p className="text-4xl font-bold mt-1">RM {monthlyIncome.toLocaleString()}</p>
-                <p className="text-sm text-muted-foreground mt-1">
-                  From {activeContracts.length} active rental{activeContracts.length !== 1 ? 's' : ''}
-                </p>
-              </div>
-              <div className="hidden sm:block">
-                <div className="h-20 w-20 rounded-full bg-accent/10 flex items-center justify-center">
-                  <Wallet className="h-10 w-10 text-accent" />
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
 
         {/* Stats Grid */}
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
