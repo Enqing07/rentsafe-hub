@@ -57,7 +57,7 @@ const statusConfig: Record<Status, { label: string; className: string }> = {
     className: 'bg-warning/10 text-warning border-warning/20',
   },
   pending_tenant_approval: {
-    label: 'Pending Approval',
+    label: 'Pending Tenant Approval',
     className: 'bg-warning/10 text-warning border-warning/20',
   },
 };

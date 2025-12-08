@@ -22,12 +22,11 @@ export default function TenantDashboard() {
   };
 
   // Filter properties based on user preferences
-  const recommendedProperties = mockProperties.filter(
-    (p) =>
-      p.available &&
-      p.price >= (user?.budgetMin || 0) &&
-      p.price <= (user?.budgetMax || Infinity)
-  );
+  const recommendedProperties = mockProperties.filter((p) => {
+    const meetsBudgetMin = user?.budgetMin ? p.price >= user.budgetMin : true;
+    const meetsBudgetMax = user?.budgetMax ? p.price <= user.budgetMax : true;
+    return p.available && meetsBudgetMin && meetsBudgetMax;
+  });
 
   const pendingApplications = mockApplications.filter(
     (app) => app.tenantIc === user?.ic && app.status === 'pending'
@@ -133,7 +132,9 @@ export default function TenantDashboard() {
             <div>
               <h2 className="text-xl font-semibold">Recommended for You</h2>
               <p className="text-sm text-muted-foreground">
-                Based on your preferences: {user?.preferredLocation}, RM {user?.budgetMin?.toLocaleString()} - RM {user?.budgetMax?.toLocaleString()}
+                {user?.preferredLocation || user?.budgetMin || user?.budgetMax
+                  ? `Based on your filters: ${user?.preferredLocation ?? 'Any location'}, RM ${user?.budgetMin?.toLocaleString() ?? '—'} - RM ${user?.budgetMax?.toLocaleString() ?? '—'}`
+                  : 'Set filters when searching to tailor recommendations.'}
               </p>
             </div>
             <Button variant="ghost" asChild>

@@ -2,9 +2,8 @@ import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { StatusBadge } from '@/components/StatusBadge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import {
   Dialog,
   DialogContent,
@@ -14,6 +13,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { mockProperties, mockContracts } from '@/data/mockData';
+import { Contract } from '@/types';
 import {
   FileText,
   Check,
@@ -24,21 +24,45 @@ import {
   Building2,
   PenTool,
   Image,
+  Filter,
+  UploadCloud,
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
 export default function Contracts() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [selectedContract, setSelectedContract] = useState<string | null>(null);
-  const [actionType, setActionType] = useState<'sign' | 'approve_photos' | 'reject_photos' | null>(null);
+  const [actionType, setActionType] = useState<'sign' | 'approve_photos' | 'reject_photos' | 'upload_photos' | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<'all' | Contract['status']>('all');
 
   const isLandlord = user?.role === 'landlord';
 
   // Filter contracts based on role
-  const contracts = isLandlord
-    ? mockContracts.filter((c) => c.landlordIc === '800515-01-5678')
-    : mockContracts.filter((c) => c.tenantIc === user?.ic);
+  const allContracts = isLandlord
+    ? mockContracts.filter((c) => {
+        // For landlords, show contracts where they are the landlord
+        // Include fallback for testing with hardcoded IC '800515-01-5678'
+        if (!user?.ic) {
+          // If no user IC, show contracts for the test landlord
+          return c.landlordIc === '800515-01-5678';
+        }
+        return c.landlordIc === user.ic || c.landlordIc === '800515-01-5678';
+      })
+    : mockContracts.filter((c) => {
+        // For tenants, show contracts where they are the tenant
+        if (!user?.ic) {
+          // If no user IC, show contracts for the test tenant
+          return c.tenantIc === '950101-01-1234';
+        }
+        return c.tenantIc === user.ic;
+      });
+
+  const contracts = allContracts.filter((c) =>
+    statusFilter === 'all' ? true : c.status === statusFilter
+  );
 
   const handleAction = async () => {
     setIsLoading(true);
@@ -56,6 +80,10 @@ export default function Contracts() {
     } else if (actionType === 'reject_photos') {
       toast.info('Photos rejected', {
         description: 'The landlord will be notified to re-upload photos.',
+      });
+    } else if (actionType === 'upload_photos') {
+      toast.success('Photos uploaded (mock)', {
+        description: 'Tenant will be prompted to approve the inspection photos.',
       });
     }
     
@@ -88,6 +116,72 @@ export default function Contracts() {
           </p>
         </div>
 
+        <div className="flex flex-wrap items-center gap-2 justify-between">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Filter className="h-4 w-4" />
+            Filter by status
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {(['all', 'pending_photos', 'pending_tenant_approval', 'pending_signatures', 'active'] as const).map((status) => (
+              <Button
+                key={status}
+                size="sm"
+                variant={statusFilter === status ? 'accent' : 'ghost'}
+                onClick={() => setStatusFilter(status)}
+              >
+                {status === 'all' && 'All'}
+                {status === 'pending_photos' && 'Awaiting Photos'}
+                {status === 'pending_tenant_approval' && 'Pending Tenant Approval'}
+                {status === 'pending_signatures' && 'Awaiting Signatures'}
+                {status === 'active' && 'Active'}
+              </Button>
+            ))}
+          </div>
+        </div>
+
+        {/* Contract Workflow Guide */}
+        <Card className="border-accent/20 bg-gradient-to-r from-accent/5 to-transparent">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5 text-accent" />
+              Contract Workflow
+            </CardTitle>
+            <CardDescription>Understanding the rental contract process</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid sm:grid-cols-4 gap-4 text-sm">
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <div className="h-6 w-6 rounded-full bg-accent text-accent-foreground flex items-center justify-center text-xs font-semibold">1</div>
+                  <p className="font-semibold">Application Approved</p>
+                </div>
+                <p className="text-muted-foreground text-xs ml-8">Contract is created and ready for photo upload</p>
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <div className="h-6 w-6 rounded-full bg-accent text-accent-foreground flex items-center justify-center text-xs font-semibold">2</div>
+                  <p className="font-semibold">Upload Photos</p>
+                </div>
+                <p className="text-muted-foreground text-xs ml-8">Landlord uploads inspection photos for tenant review</p>
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <div className="h-6 w-6 rounded-full bg-accent text-accent-foreground flex items-center justify-center text-xs font-semibold">3</div>
+                  <p className="font-semibold">Sign Contract</p>
+                </div>
+                <p className="text-muted-foreground text-xs ml-8">Both parties sign using MyDigital ID</p>
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <div className="h-6 w-6 rounded-full bg-accent text-accent-foreground flex items-center justify-center text-xs font-semibold">4</div>
+                  <p className="font-semibold">Deposit & Escrow</p>
+                </div>
+                <p className="text-muted-foreground text-xs ml-8">Tenant pays deposit into secure escrow account</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         {contracts.length === 0 ? (
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-16">
@@ -107,72 +201,64 @@ export default function Contracts() {
               
               return (
                 <Card key={contract.id}>
-                  <CardContent className="p-6">
-                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                      <div className="flex items-start gap-4">
-                        <div className="h-20 w-20 rounded-lg bg-muted overflow-hidden flex-shrink-0">
-                          <img
-                            src={property?.photos[0] || '/placeholder.svg'}
-                            alt={property?.title}
-                            className="h-full w-full object-cover"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <h3 className="font-semibold">{property?.title}</h3>
-                            <Badge variant="outline">{getContractStatusLabel(contract.status)}</Badge>
-                          </div>
-                          <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
-                            <span className="flex items-center gap-1">
-                              <Building2 className="h-4 w-4" />
-                              {property?.location}
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <Calendar className="h-4 w-4" />
-                              {new Date(contract.startDate).toLocaleDateString()} - {new Date(contract.endDate).toLocaleDateString()}
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <DollarSign className="h-4 w-4" />
-                              RM {contract.monthlyRent.toLocaleString()}/mo
-                            </span>
-                          </div>
-                          
-                          {/* Signature Status */}
-                          <div className="flex items-center gap-4 text-sm">
-                            <div className="flex items-center gap-1">
-                              <PenTool className="h-4 w-4" />
-                              Tenant:
-                              {contract.tenantSigned ? (
-                                <Check className="h-4 w-4 text-success" />
-                              ) : (
-                                <X className="h-4 w-4 text-muted-foreground" />
-                              )}
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <PenTool className="h-4 w-4" />
-                              Landlord:
-                              {contract.landlordSigned ? (
-                                <Check className="h-4 w-4 text-success" />
-                              ) : (
-                                <X className="h-4 w-4 text-muted-foreground" />
-                              )}
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <Image className="h-4 w-4" />
-                              Photos:
-                              {contract.photosApproved ? (
-                                <Check className="h-4 w-4 text-success" />
-                              ) : (
-                                <X className="h-4 w-4 text-muted-foreground" />
-                              )}
-                            </div>
-                          </div>
-                        </div>
+                  <CardContent className="flex flex-col gap-4 p-4 md:flex-row md:items-center md:justify-between">
+                    <div className="flex items-start gap-4">
+                      <div className="h-16 w-16 rounded-lg bg-muted overflow-hidden flex-shrink-0">
+                        <img
+                          src={property?.photos[0] || '/placeholder.svg'}
+                          alt={property?.title}
+                          className="h-full w-full object-cover"
+                        />
                       </div>
-
-                      {/* Actions */}
-                      <div className="flex flex-col gap-2 lg:items-end">
-                        {!isLandlord && !contract.photosApproved && contract.status === 'pending_tenant_approval' && (
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h3 className="font-semibold">{property?.title}</h3>
+                          <StatusBadge status={contract.status} />
+                        </div>
+                        {isLandlord ? (
+                          <>
+                            <p className="text-sm text-muted-foreground">
+                              Tenant IC: {contract.tenantIc}
+                            </p>
+                            <p className="text-sm font-medium text-accent">
+                              RM {contract.monthlyRent.toLocaleString()}/mo — Deposit RM {contract.depositAmount.toLocaleString()}
+                            </p>
+                          </>
+                        ) : (
+                          <>
+                            <p className="text-sm text-muted-foreground">
+                              Landlord IC: {contract.landlordIc}
+                            </p>
+                            <p className="text-sm font-medium text-accent">
+                              RM {contract.monthlyRent.toLocaleString()}/mo — Deposit RM {contract.depositAmount.toLocaleString()}
+                            </p>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap gap-2 justify-end">
+                      {/* Awaiting Photos: Show View Contract and Upload Photos */}
+                      {contract.status === 'pending_photos' && (
+                        <>
+                          <Button variant="outline" size="sm" onClick={() => navigate(`/contracts/${contract.id}`)}>
+                            <FileText className="h-4 w-4 mr-1" />
+                            View Contract
+                          </Button>
+                          {isLandlord && (
+                            <Button variant="outline" size="sm" onClick={() => navigate(`/contracts/${contract.id}/upload-photos`)}>
+                              <Image className="h-4 w-4 mr-1" />
+                              Upload Photos
+                            </Button>
+                          )}
+                        </>
+                      )}
+                      {/* Pending Tenant Approval: Show View Contract and Approve/Reject buttons (tenant only) */}
+                      {!isLandlord && contract.status === 'pending_tenant_approval' && (
+                        <>
+                          <Button variant="outline" size="sm" onClick={() => navigate(`/contracts/${contract.id}`)}>
+                            <FileText className="h-4 w-4 mr-1" />
+                            View Contract
+                          </Button>
                           <div className="flex gap-2">
                             <Button
                               variant="outline"
@@ -197,43 +283,22 @@ export default function Contracts() {
                               Approve Photos
                             </Button>
                           </div>
-                        )}
-                        
-                        {contract.photosApproved && !contract.tenantSigned && !isLandlord && (
-                          <Button
-                            variant="mydigital-id"
-                            size="sm"
-                            onClick={() => {
-                              setSelectedContract(contract.id);
-                              setActionType('sign');
-                            }}
-                          >
-                            <Shield className="h-4 w-4 mr-1" />
-                            Sign with MyDigital ID
-                          </Button>
-                        )}
-                        
-                        {contract.photosApproved && contract.tenantSigned && !contract.landlordSigned && isLandlord && (
-                          <Button
-                            variant="mydigital-id"
-                            size="sm"
-                            onClick={() => {
-                              setSelectedContract(contract.id);
-                              setActionType('sign');
-                            }}
-                          >
-                            <Shield className="h-4 w-4 mr-1" />
-                            Sign with MyDigital ID
-                          </Button>
-                        )}
-                        
-                        {contract.status === 'active' && (
-                          <Button variant="outline" size="sm">
-                            <FileText className="h-4 w-4 mr-1" />
-                            View Contract
-                          </Button>
-                        )}
-                      </div>
+                        </>
+                      )}
+                      {/* Awaiting Signatures: Only show View Contract (signing happens inside) */}
+                      {contract.status === 'pending_signatures' && (
+                        <Button variant="outline" size="sm" onClick={() => navigate(`/contracts/${contract.id}`)}>
+                          <FileText className="h-4 w-4 mr-1" />
+                          View Contract
+                        </Button>
+                      )}
+                      {/* Active: Show View Contract */}
+                      {contract.status === 'active' && (
+                        <Button variant="outline" size="sm" onClick={() => navigate(`/contracts/${contract.id}`)}>
+                          <FileText className="h-4 w-4 mr-1" />
+                          View Contract
+                        </Button>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
@@ -268,6 +333,12 @@ export default function Contracts() {
                     Reject Property Photos
                   </>
                 )}
+                {actionType === 'upload_photos' && (
+                  <>
+                    <Image className="h-5 w-5 text-accent" />
+                    Upload Inspection Photos
+                  </>
+                )}
               </DialogTitle>
               <DialogDescription>
                 {actionType === 'sign' && (
@@ -279,8 +350,20 @@ export default function Contracts() {
                 {actionType === 'reject_photos' && (
                   'The landlord will be notified to upload new photos. Please provide a reason for rejection.'
                 )}
+                {actionType === 'upload_photos' && (
+                  'Attach move-in photos for tenant approval. This is a mock upload — files stay on your device.'
+                )}
               </DialogDescription>
             </DialogHeader>
+
+            {actionType === 'upload_photos' && (
+              <div className="rounded-lg border-2 border-dashed p-4 space-y-2 text-sm text-muted-foreground">
+                <UploadCloud className="h-8 w-8 text-muted-foreground" />
+                <p>Drag files here or click confirm to simulate an upload.</p>
+                <p className="text-xs">Tenants will be prompted to approve before signing.</p>
+              </div>
+            )}
+
             <DialogFooter>
               <Button variant="outline" onClick={() => {
                 setSelectedContract(null);

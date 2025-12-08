@@ -7,13 +7,13 @@ interface AuthContextType {
   isLoading: boolean;
   login: () => Promise<void>;
   logout: () => void;
-  completeProfile: (role: UserRole, preferences: ProfilePreferences) => void;
+  completeProfile: (role: UserRole, preferences?: ProfilePreferences) => void;
 }
 
 interface ProfilePreferences {
-  preferredLocation: string;
-  budgetMin: number;
-  budgetMax: number;
+  preferredLocation?: string;
+  budgetMin?: number;
+  budgetMax?: number;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -53,21 +53,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem('rentsafe_user');
   }, []);
 
-  const completeProfile = useCallback((role: UserRole, preferences: ProfilePreferences) => {
-    if (!user) return;
-    
-    const updatedUser: User = {
-      ...user,
-      role,
-      preferredLocation: preferences.preferredLocation,
-      budgetMin: preferences.budgetMin,
-      budgetMax: preferences.budgetMax,
-      profileComplete: true,
-    };
-    
-    setUser(updatedUser);
-    localStorage.setItem('rentsafe_user', JSON.stringify(updatedUser));
-  }, [user]);
+  const completeProfile = useCallback(
+    (role: UserRole, preferences?: ProfilePreferences) => {
+      if (!user) return;
+      
+      const updatedUser: User = {
+        ...user,
+        role,
+        preferredLocation: preferences?.preferredLocation || user.preferredLocation,
+        budgetMin: preferences?.budgetMin ?? user.budgetMin,
+        budgetMax: preferences?.budgetMax ?? user.budgetMax,
+        profileComplete: true,
+      };
+      
+      setUser(updatedUser);
+      localStorage.setItem('rentsafe_user', JSON.stringify(updatedUser));
+    },
+    [user]
+  );
 
   return (
     <AuthContext.Provider

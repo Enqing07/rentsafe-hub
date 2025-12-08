@@ -1,35 +1,34 @@
+import { useMemo, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { StatusBadge } from '@/components/StatusBadge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { mockProperties, mockApplications } from '@/data/mockData';
-import { ClipboardList, ArrowRight, Building2, Calendar, User } from 'lucide-react';
+import { ClipboardList, ArrowRight, Building2, Calendar, User, Filter } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
 export default function Applications() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
 
   const isLandlord = user?.role === 'landlord';
 
   // Filter applications based on role
-  const applications = isLandlord
-    ? mockApplications.filter((app) => app.landlordIc === '800515-01-5678')
-    : mockApplications.filter((app) => app.tenantIc === user?.ic);
+  const applications = useMemo(
+    () =>
+      isLandlord
+        ? mockApplications.filter((app) => app.landlordIc === '800515-01-5678')
+        : mockApplications.filter((app) => app.tenantIc === user?.ic),
+    [isLandlord, user?.ic]
+  );
 
-  const handleApprove = (appId: string) => {
-    toast.success('Application approved!', {
-      description: 'The tenant will be notified and can proceed with the contract.',
-    });
-  };
+  const filteredApplications = applications.filter((app) =>
+    statusFilter === 'all' ? true : app.status === statusFilter
+  );
 
-  const handleReject = (appId: string) => {
-    toast.success('Application rejected', {
-      description: 'The tenant will be notified of your decision.',
-    });
-  };
 
   return (
     <DashboardLayout>
@@ -46,7 +45,26 @@ export default function Applications() {
           </p>
         </div>
 
-        {applications.length === 0 ? (
+        <div className="flex flex-wrap items-center gap-2 justify-between">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Filter className="h-4 w-4" />
+            Filter by status
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {(['all', 'pending', 'approved', 'rejected'] as const).map((status) => (
+              <Button
+                key={status}
+                size="sm"
+                variant={statusFilter === status ? 'accent' : 'ghost'}
+                onClick={() => setStatusFilter(status)}
+              >
+                {status === 'all' ? 'All' : status.charAt(0).toUpperCase() + status.slice(1)}
+              </Button>
+            ))}
+          </div>
+        </div>
+
+        {filteredApplications.length === 0 ? (
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-16">
               <div className="rounded-full bg-muted p-4 mb-4">
@@ -67,7 +85,7 @@ export default function Applications() {
           </Card>
         ) : (
           <div className="grid gap-4">
-            {applications.map((app) => {
+            {filteredApplications.map((app) => {
               const property = mockProperties.find((p) => p.id === app.propertyId);
               return (
                 <Card key={app.id} className="overflow-hidden">
@@ -113,22 +131,14 @@ export default function Applications() {
                         {/* Actions */}
                         <div className="flex items-center gap-2">
                           {isLandlord && app.status === 'pending' ? (
-                            <>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleReject(app.id)}
-                              >
-                                Reject
-                              </Button>
-                              <Button
-                                variant="accent"
-                                size="sm"
-                                onClick={() => handleApprove(app.id)}
-                              >
-                                Approve
-                              </Button>
-                            </>
+                            <Button
+                              variant="accent"
+                              size="sm"
+                              onClick={() => navigate(`/applications/${app.id}/review`)}
+                            >
+                              Review Application
+                              <ArrowRight className="h-4 w-4 ml-2" />
+                            </Button>
                           ) : (
                             <Button
                               variant="outline"

@@ -12,7 +12,10 @@ import TenantDashboard from "./pages/TenantDashboard";
 import LandlordDashboard from "./pages/LandlordDashboard";
 import ListingDetails from "./pages/ListingDetails";
 import Applications from "./pages/Applications";
+import ApplicationReview from "./pages/ApplicationReview";
 import Contracts from "./pages/Contracts";
+import ViewContract from "./pages/ViewContract";
+import UploadPhotos from "./pages/UploadPhotos";
 import Escrow from "./pages/Escrow";
 import Profile from "./pages/Profile";
 import SavedListings from "./pages/SavedListings";
@@ -57,7 +60,10 @@ function AppRoutes() {
       <Route path="/listing/:id" element={<ProtectedRoute><ListingDetails /></ProtectedRoute>} />
       <Route path="/listings" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
       <Route path="/applications" element={<ProtectedRoute><Applications /></ProtectedRoute>} />
+      <Route path="/applications/:id/review" element={<ProtectedRoute><ApplicationReview /></ProtectedRoute>} />
       <Route path="/contracts" element={<ProtectedRoute><Contracts /></ProtectedRoute>} />
+      <Route path="/contracts/:id" element={<ProtectedRoute><ViewContract /></ProtectedRoute>} />
+      <Route path="/contracts/:id/upload-photos" element={<ProtectedRoute><UploadPhotos /></ProtectedRoute>} />
       <Route path="/escrow" element={<ProtectedRoute><Escrow /></ProtectedRoute>} />
       <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
       <Route path="/saved" element={<ProtectedRoute><SavedListings /></ProtectedRoute>} />

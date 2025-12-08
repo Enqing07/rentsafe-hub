@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { StatusBadge } from '@/components/StatusBadge';
@@ -13,7 +13,8 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { mockProperties, mockContracts, mockEscrows } from '@/data/mockData';
-import { Wallet, Shield, CreditCard, Smartphone, ArrowRight, Check, Calendar, Building2 } from 'lucide-react';
+import { Escrow as EscrowType } from '@/types';
+import { Wallet, Shield, CreditCard, Smartphone, ArrowRight, Check, Calendar, Building2, Filter } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function Escrow() {
@@ -23,13 +24,23 @@ export default function Escrow() {
   const [selectedEscrowId, setSelectedEscrowId] = useState<string | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<'fpx' | 'duitnow' | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<'all' | EscrowType['status']>('all');
 
   const isLandlord = user?.role === 'landlord';
 
   // Filter escrows based on role
-  const escrows = isLandlord
-    ? mockEscrows.filter((e) => e.landlordIc === '800515-01-5678')
-    : mockEscrows.filter((e) => e.tenantIc === user?.ic);
+  const allEscrows = useMemo(
+    () =>
+      isLandlord
+        ? mockEscrows.filter((e) => e.landlordIc === user?.ic || e.landlordIc === '800515-01-5678')
+        : mockEscrows.filter((e) => e.tenantIc === user?.ic),
+    [isLandlord, user?.ic]
+  );
+
+  const escrows = useMemo(
+    () => allEscrows.filter((e) => (statusFilter === 'all' ? true : e.status === statusFilter)),
+    [allEscrows, statusFilter]
+  );
 
   const handlePayment = async () => {
     if (!paymentMethod) return;
@@ -99,6 +110,31 @@ export default function Escrow() {
           </CardContent>
         </Card>
 
+        {/* Filter */}
+        <div className="flex flex-wrap items-center gap-2 justify-between">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Filter className="h-4 w-4" />
+            Filter by status
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {(['all', 'pending', 'secured', 'release_requested', 'released', 'disputed'] as const).map((status) => (
+              <Button
+                key={status}
+                size="sm"
+                variant={statusFilter === status ? 'accent' : 'ghost'}
+                onClick={() => setStatusFilter(status)}
+              >
+                {status === 'all'
+                  ? 'All'
+                  : status
+                      .split('_')
+                      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+                      .join(' ')}
+              </Button>
+            ))}
+          </div>
+        </div>
+
         {escrows.length === 0 ? (
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-16">
@@ -106,9 +142,6 @@ export default function Escrow() {
                 <Wallet className="h-8 w-8 text-muted-foreground" />
               </div>
               <h3 className="font-semibold mb-2">No Escrow Records</h3>
-              <p className="text-muted-foreground text-center max-w-sm">
-                Escrow records will appear here once a contract is signed and deposit is paid.
-              </p>
             </CardContent>
           </Card>
         ) : (

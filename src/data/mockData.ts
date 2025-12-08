@@ -98,7 +98,117 @@ export const mockApplications: Application[] = [
     status: 'pending',
     appliedAt: '2024-02-20',
   },
+  {
+    id: 'app-2',
+    propertyId: 'prop-2',
+    tenantIc: '960202-02-2222',
+    tenantName: 'Nur Aina Binti Salleh',
+    landlordIc: '800515-01-5678',
+    status: 'approved',
+    appliedAt: '2024-02-22',
+  },
+  {
+    id: 'app-3',
+    propertyId: 'prop-3',
+    tenantIc: '920707-07-7777',
+    tenantName: 'Chan Li Wei',
+    landlordIc: '750820-02-9012',
+    status: 'rejected',
+    appliedAt: '2024-02-18',
+  },
 ];
+
+// Mock tenant information for applications
+export const mockTenantInfo: Record<string, { age: number; gender: 'male' | 'female' }> = {
+  '950101-01-1234': { age: 29, gender: 'male' },
+  '960202-02-2222': { age: 28, gender: 'female' },
+  '920707-07-7777': { age: 32, gender: 'male' },
+  '930808-08-8888': { age: 31, gender: 'male' },
+};
+
+// Mock rental history
+export interface RentalHistoryItem {
+  id: string;
+  propertyId: string;
+  propertyTitle: string;
+  propertyLocation: string;
+  landlordName: string;
+  startDate: string;
+  endDate: string;
+  monthlyRent: number;
+  status: 'completed' | 'terminated';
+  rating?: number;
+}
+
+export const mockRentalHistories: Record<string, RentalHistoryItem[]> = {
+  '950101-01-1234': [
+    {
+      id: 'history-1',
+      propertyId: 'prop-old-1',
+      propertyTitle: 'Studio Apartment in KL Sentral',
+      propertyLocation: 'Kuala Lumpur',
+      landlordName: 'Lee Mei Choo',
+      startDate: '2022-01-01',
+      endDate: '2023-12-31',
+      monthlyRent: 1800,
+      status: 'completed',
+      rating: 5,
+    },
+    {
+      id: 'history-2',
+      propertyId: 'prop-old-2',
+      propertyTitle: '2BR Condo in Bangsar',
+      propertyLocation: 'Bangsar',
+      landlordName: 'Tan Ah Beng',
+      startDate: '2021-06-01',
+      endDate: '2021-12-31',
+      monthlyRent: 2000,
+      status: 'completed',
+      rating: 4,
+    },
+  ],
+  '960202-02-2222': [
+    {
+      id: 'history-3',
+      propertyId: 'prop-old-3',
+      propertyTitle: '1BR Apartment in Subang Jaya',
+      propertyLocation: 'Subang Jaya',
+      landlordName: 'Wong Siew Leng',
+      startDate: '2023-03-01',
+      endDate: '2024-02-29',
+      monthlyRent: 1500,
+      status: 'completed',
+      rating: 5,
+    },
+  ],
+  '920707-07-7777': [
+    {
+      id: 'history-4',
+      propertyId: 'prop-old-4',
+      propertyTitle: '3BR House in Petaling Jaya',
+      propertyLocation: 'Petaling Jaya',
+      landlordName: 'Lim Kok Wai',
+      startDate: '2020-01-01',
+      endDate: '2023-12-31',
+      monthlyRent: 3500,
+      status: 'completed',
+      rating: 4,
+    },
+    {
+      id: 'history-5',
+      propertyId: 'prop-old-5',
+      propertyTitle: '2BR Condo in Mont Kiara',
+      propertyLocation: 'Mont Kiara',
+      landlordName: 'Chin Yoke Lin',
+      startDate: '2018-06-01',
+      endDate: '2019-12-31',
+      monthlyRent: 2800,
+      status: 'completed',
+      rating: 5,
+    },
+  ],
+  '930808-08-8888': [],
+};
 
 export const mockContracts: Contract[] = [
   {
@@ -115,6 +225,48 @@ export const mockContracts: Contract[] = [
     landlordSigned: true,
     status: 'active',
   },
+  {
+    id: 'contract-2',
+    propertyId: 'prop-1',
+    tenantIc: '960202-02-2222',
+    landlordIc: '800515-01-5678',
+    startDate: '2024-04-01',
+    endDate: '2025-03-31',
+    monthlyRent: 2800,
+    depositAmount: 5600,
+    photosApproved: true,
+    tenantSigned: true,
+    landlordSigned: false,
+    status: 'pending_signatures',
+  },
+  {
+    id: 'contract-3',
+    propertyId: 'prop-3',
+    tenantIc: '950101-01-1234',
+    landlordIc: '750820-02-9012',
+    startDate: '2024-05-01',
+    endDate: '2025-04-30',
+    monthlyRent: 4500,
+    depositAmount: 9000,
+    photosApproved: false,
+    tenantSigned: false,
+    landlordSigned: false,
+    status: 'pending_photos',
+  },
+  {
+    id: 'contract-4',
+    propertyId: 'prop-2',
+    tenantIc: '930808-08-8888',
+    landlordIc: '800515-01-5678',
+    startDate: '2024-06-01',
+    endDate: '2025-05-31',
+    monthlyRent: 2200,
+    depositAmount: 4400,
+    photosApproved: false,
+    tenantSigned: false,
+    landlordSigned: false,
+    status: 'pending_photos',
+  },
 ];
 
 export const mockEscrows: Escrow[] = [
@@ -127,6 +279,27 @@ export const mockEscrows: Escrow[] = [
     status: 'secured',
     paymentMethod: 'fpx',
     paidAt: '2024-02-25',
+  },
+  {
+    id: 'escrow-2',
+    contractId: 'contract-2',
+    tenantIc: '960202-02-2222',
+    landlordIc: '800515-01-5678',
+    amount: 5600,
+    status: 'release_requested',
+    paymentMethod: 'duitnow',
+    paidAt: '2024-03-15',
+    releasedAt: '2024-11-30',
+  },
+  {
+    id: 'escrow-3',
+    contractId: 'contract-3',
+    tenantIc: '950101-01-1234',
+    landlordIc: '750820-02-9012',
+    amount: 9000,
+    status: 'disputed',
+    paymentMethod: 'fpx',
+    paidAt: '2024-04-02',
   },
 ];
 

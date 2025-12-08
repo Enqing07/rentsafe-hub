@@ -5,29 +5,19 @@ import { Logo } from '@/components/Logo';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Slider } from '@/components/ui/slider';
 import { UserRole } from '@/types';
-import { malaysianLocations } from '@/data/mockData';
-import { Home, Building2, MapPin, DollarSign, ArrowRight } from 'lucide-react';
+import { Home, Building2, ArrowRight } from 'lucide-react';
 
 export default function ProfileSetup() {
   const { user, completeProfile } = useAuth();
   const navigate = useNavigate();
   
-  const [role, setRole] = useState<UserRole | null>(null);
-  const [location, setLocation] = useState('');
-  const [budgetRange, setBudgetRange] = useState([1000, 5000]);
+  const [role, setRole] = useState<UserRole | null>(user?.role ?? null);
 
   const handleSubmit = () => {
-    if (!role || !location) return;
+    if (!role) return;
     
-    completeProfile(role, {
-      preferredLocation: location,
-      budgetMin: budgetRange[0],
-      budgetMax: budgetRange[1],
-    });
+    completeProfile(role);
     
     navigate('/dashboard');
   };
@@ -113,55 +103,12 @@ export default function ProfileSetup() {
               </div>
             </div>
 
-            {/* Location */}
-            <div className="space-y-3">
-              <Label className="text-base flex items-center gap-2">
-                <MapPin className="h-4 w-4" />
-                Preferred Location
-              </Label>
-              <Select value={location} onValueChange={setLocation}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select your preferred location" />
-                </SelectTrigger>
-                <SelectContent>
-                  {malaysianLocations.map((loc) => (
-                    <SelectItem key={loc} value={loc}>
-                      {loc}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Budget Range */}
-            <div className="space-y-4">
-              <Label className="text-base flex items-center gap-2">
-                <DollarSign className="h-4 w-4" />
-                Budget Range (Monthly)
-              </Label>
-              <div className="px-2">
-                <Slider
-                  value={budgetRange}
-                  onValueChange={setBudgetRange}
-                  min={500}
-                  max={15000}
-                  step={100}
-                  className="py-4"
-                />
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="font-medium">RM {budgetRange[0].toLocaleString()}</span>
-                <span className="text-muted-foreground">to</span>
-                <span className="font-medium">RM {budgetRange[1].toLocaleString()}</span>
-              </div>
-            </div>
-
             {/* Submit */}
             <Button
               size="lg"
               className="w-full"
               onClick={handleSubmit}
-              disabled={!role || !location}
+              disabled={!role}
             >
               Complete Setup
               <ArrowRight className="h-4 w-4 ml-2" />
