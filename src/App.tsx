@@ -11,6 +11,7 @@ import ProfileSetup from "./pages/ProfileSetup";
 import TenantDashboard from "./pages/TenantDashboard";
 import LandlordDashboard from "./pages/LandlordDashboard";
 import ListingDetails from "./pages/ListingDetails";
+import Listings from "./pages/Listings";
 import Applications from "./pages/Applications";
 import ApplicationReview from "./pages/ApplicationReview";
 import Contracts from "./pages/Contracts";
@@ -58,7 +59,7 @@ function AppRoutes() {
       <Route path="/setup" element={<ProfileSetup />} />
       <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
       <Route path="/listing/:id" element={<ProtectedRoute><ListingDetails /></ProtectedRoute>} />
-      <Route path="/listings" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+      <Route path="/listings" element={<ProtectedRoute><Listings /></ProtectedRoute>} />
       <Route path="/applications" element={<ProtectedRoute><Applications /></ProtectedRoute>} />
       <Route path="/applications/:id/review" element={<ProtectedRoute><ApplicationReview /></ProtectedRoute>} />
       <Route path="/contracts" element={<ProtectedRoute><Contracts /></ProtectedRoute>} />
