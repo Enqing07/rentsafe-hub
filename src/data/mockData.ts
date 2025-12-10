@@ -267,6 +267,20 @@ export const mockContracts: Contract[] = [
     landlordSigned: false,
     status: 'pending_photos',
   },
+  {
+    id: 'contract-5',
+    propertyId: 'prop-5',
+    tenantIc: '950101-01-1234',
+    landlordIc: '880305-03-3456',
+    startDate: '2024-07-01',
+    endDate: '2025-06-30',
+    monthlyRent: 12000,
+    depositAmount: 24000,
+    photosApproved: true,
+    tenantSigned: true,
+    landlordSigned: true,
+    status: 'active',
+  },
 ];
 
 export const mockEscrows: Escrow[] = [
