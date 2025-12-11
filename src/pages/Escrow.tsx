@@ -7,7 +7,14 @@ import { StatusBadge } from '@/components/StatusBadge';
 import { PaymentModal } from '@/components/PaymentModal';
 import { useAuth } from '@/contexts/AuthContext';
 import { mockEscrows, mockContracts, mockProperties } from '@/data/mockData';
-import { Escrow as EscrowType } from '@/types';
+import { Escrow as EscrowType, Contract } from '@/types';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import {
   Wallet,
   Shield,
@@ -19,6 +26,11 @@ import {
   AlertCircle,
   Clock,
   Ban,
+  FileText,
+  DollarSign,
+  User,
+  Check,
+  X,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -32,6 +44,7 @@ export default function Escrow() {
     amount: number;
     propertyTitle: string;
   } | null>(null);
+  const [previewContract, setPreviewContract] = useState<Contract | null>(null);
 
   // Get escrows for current user
   const userEscrows = escrows.filter(
@@ -324,7 +337,16 @@ export default function Escrow() {
                         />
 
                         {/* Action Buttons */}
-                        <div className="flex gap-2 mt-2">
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => setPreviewContract(getContract(escrow.contractId) || null)}
+                          >
+                            <FileText className="mr-1 h-4 w-4" />
+                            View Contract
+                          </Button>
+
                           {user?.role === 'tenant' && escrow.status === 'secured' && (
                             <Button
                               size="sm"
@@ -396,6 +418,153 @@ export default function Escrow() {
           onPaymentComplete={handlePaymentComplete}
         />
       )}
+
+      {/* Contract Preview Dialog */}
+      <Dialog open={!!previewContract} onOpenChange={(open) => !open && setPreviewContract(null)}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              Contract Preview
+            </DialogTitle>
+            <DialogDescription>
+              Contract ID: {previewContract?.id}
+            </DialogDescription>
+          </DialogHeader>
+
+          {previewContract && (
+            <div className="space-y-6">
+              {/* Property Info */}
+              <div className="p-4 bg-muted/50 rounded-lg">
+                <h4 className="font-semibold mb-3 flex items-center gap-2">
+                  <Building2 className="h-4 w-4" />
+                  Property Details
+                </h4>
+                <div className="grid sm:grid-cols-2 gap-3 text-sm">
+                  <div>
+                    <p className="text-muted-foreground">Property</p>
+                    <p className="font-medium">
+                      {mockProperties.find((p) => p.id === previewContract.propertyId)?.title}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Location</p>
+                    <p className="font-medium">
+                      {mockProperties.find((p) => p.id === previewContract.propertyId)?.location}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Contract Terms */}
+              <div className="p-4 bg-muted/50 rounded-lg">
+                <h4 className="font-semibold mb-3 flex items-center gap-2">
+                  <Calendar className="h-4 w-4" />
+                  Contract Terms
+                </h4>
+                <div className="grid sm:grid-cols-2 gap-3 text-sm">
+                  <div>
+                    <p className="text-muted-foreground">Start Date</p>
+                    <p className="font-medium">
+                      {new Date(previewContract.startDate).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">End Date</p>
+                    <p className="font-medium">
+                      {new Date(previewContract.endDate).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Monthly Rent</p>
+                    <p className="font-medium flex items-center gap-1">
+                      <DollarSign className="h-3 w-3" />
+                      RM {previewContract.monthlyRent.toLocaleString()}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Security Deposit</p>
+                    <p className="font-medium">RM {previewContract.depositAmount.toLocaleString()}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Parties */}
+              <div className="p-4 bg-muted/50 rounded-lg">
+                <h4 className="font-semibold mb-3 flex items-center gap-2">
+                  <User className="h-4 w-4" />
+                  Parties
+                </h4>
+                <div className="grid sm:grid-cols-2 gap-3 text-sm">
+                  <div>
+                    <p className="text-muted-foreground">Tenant IC</p>
+                    <p className="font-medium">{previewContract.tenantIc}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Landlord IC</p>
+                    <p className="font-medium">{previewContract.landlordIc}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Signature Status */}
+              <div className="p-4 bg-muted/50 rounded-lg">
+                <h4 className="font-semibold mb-3">Signature Status</h4>
+                <div className="flex flex-wrap gap-4 text-sm">
+                  <div className="flex items-center gap-2">
+                    <span className="text-muted-foreground">Tenant:</span>
+                    {previewContract.tenantSigned ? (
+                      <Badge variant="outline" className="text-emerald-600 border-emerald-600">
+                        <Check className="h-3 w-3 mr-1" />
+                        Signed
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="text-muted-foreground">
+                        <X className="h-3 w-3 mr-1" />
+                        Pending
+                      </Badge>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-muted-foreground">Landlord:</span>
+                    {previewContract.landlordSigned ? (
+                      <Badge variant="outline" className="text-emerald-600 border-emerald-600">
+                        <Check className="h-3 w-3 mr-1" />
+                        Signed
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="text-muted-foreground">
+                        <X className="h-3 w-3 mr-1" />
+                        Pending
+                      </Badge>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-muted-foreground">Photos:</span>
+                    {previewContract.photosApproved ? (
+                      <Badge variant="outline" className="text-emerald-600 border-emerald-600">
+                        <Check className="h-3 w-3 mr-1" />
+                        Approved
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="text-muted-foreground">
+                        <X className="h-3 w-3 mr-1" />
+                        Pending
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Contract Status */}
+              <div className="flex items-center justify-between pt-2 border-t">
+                <span className="text-sm text-muted-foreground">Contract Status</span>
+                <StatusBadge status={previewContract.status} />
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 }
