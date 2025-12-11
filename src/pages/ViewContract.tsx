@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { mockProperties, mockContracts } from '@/data/mockData';
-import { FileText, Shield, ArrowLeft, Check, X, Building2, Calendar, DollarSign, PenTool, Image } from 'lucide-react';
+import { FileText, Shield, ArrowLeft, Check, X, Building2, Calendar, DollarSign, PenTool, Image, CreditCard } from 'lucide-react';
 import { toast } from 'sonner';
 import { useState, useEffect } from 'react';
 import { Contract } from '@/types';
@@ -67,6 +67,19 @@ export default function ViewContract() {
     
     toast.success('Contract signed successfully!', {
       description: `Your digital signature has been embedded with MyDigital ID. ${nextStep}`,
+    });
+  };
+
+  const simulateLandlordSign = async () => {
+    setIsSigning(true);
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+    setLocalContract(prev => {
+      if (!prev) return prev;
+      return { ...prev, landlordSigned: true, status: 'active' as const };
+    });
+    setIsSigning(false);
+    toast.success('Landlord has signed!', {
+      description: 'Contract is now fully signed. You can proceed to payment.',
     });
   };
 
@@ -266,6 +279,56 @@ export default function ViewContract() {
                       Sign via MyDigital ID
                     </>
                   )}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Proceed to Payment - Shows after both parties signed */}
+        {localContract.tenantSigned && localContract.landlordSigned && (
+          <Card className="border-success/20 bg-success/5">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-semibold mb-1 flex items-center gap-2">
+                    <Check className="h-5 w-5 text-success" />
+                    Contract Fully Signed
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Both parties have signed. You can now proceed to pay the security deposit via escrow.
+                  </p>
+                </div>
+                <Button onClick={() => navigate('/escrow')} className="gap-2">
+                  <CreditCard className="h-4 w-4" />
+                  Proceed to Payment
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Waiting for other party */}
+        {localContract.tenantSigned && !localContract.landlordSigned && !isLandlord && (
+          <Card className="border-warning/20 bg-warning/5">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-warning border-t-transparent" />
+                  <div>
+                    <p className="font-semibold mb-1">Awaiting Landlord Signature</p>
+                    <p className="text-sm text-muted-foreground">
+                      You've signed the contract. Waiting for the landlord to sign before you can proceed to payment.
+                    </p>
+                  </div>
+                </div>
+                <Button 
+                  variant="outline" 
+                  onClick={simulateLandlordSign} 
+                  disabled={isSigning}
+                  className="text-xs"
+                >
+                  {isSigning ? 'Simulating...' : 'Simulate Landlord Sign'}
                 </Button>
               </div>
             </CardContent>
