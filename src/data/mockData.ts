@@ -248,10 +248,10 @@ export const mockContracts: Contract[] = [
     endDate: '2025-04-30',
     monthlyRent: 4500,
     depositAmount: 9000,
-    photosApproved: false,
+    photosApproved: true,
     tenantSigned: false,
     landlordSigned: false,
-    status: 'pending_photos',
+    status: 'pending_signatures',
   },
   {
     id: 'contract-4',
