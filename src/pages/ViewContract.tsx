@@ -7,19 +7,27 @@ import { Badge } from '@/components/ui/badge';
 import { mockProperties, mockContracts } from '@/data/mockData';
 import { FileText, Shield, ArrowLeft, Check, X, Building2, Calendar, DollarSign, PenTool, Image } from 'lucide-react';
 import { toast } from 'sonner';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { Contract } from '@/types';
 
 export default function ViewContract() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
   const [isSigning, setIsSigning] = useState(false);
+  const [localContract, setLocalContract] = useState<Contract | null>(null);
 
-  const contract = mockContracts.find((c) => c.id === id);
-  const property = mockProperties.find((p) => p.id === contract?.propertyId);
+  const originalContract = mockContracts.find((c) => c.id === id);
+  const property = mockProperties.find((p) => p.id === originalContract?.propertyId);
   const isLandlord = user?.role === 'landlord';
 
-  if (!contract || !property) {
+  useEffect(() => {
+    if (originalContract) {
+      setLocalContract({ ...originalContract });
+    }
+  }, [id]);
+
+  if (!localContract || !property) {
     return (
       <DashboardLayout>
         <Card>
@@ -34,17 +42,32 @@ export default function ViewContract() {
   }
 
   const canSign = isLandlord
-    ? contract.photosApproved && contract.tenantSigned && !contract.landlordSigned
-    : contract.photosApproved && !contract.tenantSigned;
+    ? localContract.photosApproved && localContract.tenantSigned && !localContract.landlordSigned
+    : localContract.photosApproved && !localContract.tenantSigned;
 
   const handleSign = async () => {
     setIsSigning(true);
     await new Promise((resolve) => setTimeout(resolve, 2000));
-    setIsSigning(false);
-    toast.success('Contract signed successfully!', {
-      description: 'Your digital signature has been embedded with MyDigital ID.',
+    
+    // Update local state to reflect signing
+    setLocalContract(prev => {
+      if (!prev) return prev;
+      if (isLandlord) {
+        return { ...prev, landlordSigned: true, status: 'active' as const };
+      } else {
+        return { ...prev, tenantSigned: true, status: 'pending_signatures' as const };
+      }
     });
-    navigate('/contracts');
+    
+    setIsSigning(false);
+    
+    const nextStep = isLandlord 
+      ? 'Contract is now active! You can proceed to the escrow page.'
+      : 'Waiting for landlord to sign.';
+    
+    toast.success('Contract signed successfully!', {
+      description: `Your digital signature has been embedded with MyDigital ID. ${nextStep}`,
+    });
   };
 
   return (
@@ -60,7 +83,7 @@ export default function ViewContract() {
             <FileText className="h-6 w-6" />
             Rental Agreement Contract
           </h1>
-          <p className="text-muted-foreground">Contract ID: {contract.id}</p>
+          <p className="text-muted-foreground">Contract ID: {localContract.id}</p>
         </div>
 
         {/* Contract Summary */}
@@ -82,19 +105,19 @@ export default function ViewContract() {
                 <p className="text-sm text-muted-foreground">Tenancy Period</p>
                 <p className="font-semibold flex items-center gap-2">
                   <Calendar className="h-4 w-4" />
-                  {new Date(contract.startDate).toLocaleDateString()} - {new Date(contract.endDate).toLocaleDateString()}
+                  {new Date(localContract.startDate).toLocaleDateString()} - {new Date(localContract.endDate).toLocaleDateString()}
                 </p>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Monthly Rent</p>
                 <p className="font-semibold flex items-center gap-2">
                   <DollarSign className="h-4 w-4" />
-                  RM {contract.monthlyRent.toLocaleString()}/month
+                  RM {localContract.monthlyRent.toLocaleString()}/month
                 </p>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Security Deposit</p>
-                <p className="font-semibold">RM {contract.depositAmount.toLocaleString()}</p>
+                <p className="font-semibold">RM {localContract.depositAmount.toLocaleString()}</p>
               </div>
             </div>
 
@@ -105,7 +128,7 @@ export default function ViewContract() {
                 <div className="flex items-center gap-2">
                   <PenTool className="h-4 w-4" />
                   <span className="text-sm">Tenant:</span>
-                  {contract.tenantSigned ? (
+                  {localContract.tenantSigned ? (
                     <Badge variant="outline" className="text-success border-success">
                       <Check className="h-3 w-3 mr-1" />
                       Signed
@@ -120,7 +143,7 @@ export default function ViewContract() {
                 <div className="flex items-center gap-2">
                   <PenTool className="h-4 w-4" />
                   <span className="text-sm">Landlord:</span>
-                  {contract.landlordSigned ? (
+                  {localContract.landlordSigned ? (
                     <Badge variant="outline" className="text-success border-success">
                       <Check className="h-3 w-3 mr-1" />
                       Signed
@@ -135,7 +158,7 @@ export default function ViewContract() {
                 <div className="flex items-center gap-2">
                   <Image className="h-4 w-4" />
                   <span className="text-sm">Photos:</span>
-                  {contract.photosApproved ? (
+                  {localContract.photosApproved ? (
                     <Badge variant="outline" className="text-success border-success">
                       <Check className="h-3 w-3 mr-1" />
                       Approved
@@ -163,7 +186,7 @@ export default function ViewContract() {
               <section>
                 <h3 className="font-semibold mb-2">1. Parties</h3>
                 <p className="text-muted-foreground">
-                  This agreement is between the Landlord ({contract.landlordIc}) and the Tenant ({contract.tenantIc}).
+                  This agreement is between the Landlord ({localContract.landlordIc}) and the Tenant ({localContract.tenantIc}).
                 </p>
               </section>
 
@@ -177,16 +200,16 @@ export default function ViewContract() {
               <section>
                 <h3 className="font-semibold mb-2">3. Term</h3>
                 <p className="text-muted-foreground">
-                  The tenancy shall commence on {new Date(contract.startDate).toLocaleDateString()} and end on{' '}
-                  {new Date(contract.endDate).toLocaleDateString()}.
+                  The tenancy shall commence on {new Date(localContract.startDate).toLocaleDateString()} and end on{' '}
+                  {new Date(localContract.endDate).toLocaleDateString()}.
                 </p>
               </section>
 
               <section>
                 <h3 className="font-semibold mb-2">4. Payment & Escrow</h3>
                 <p className="text-muted-foreground">
-                  Monthly rent of RM {contract.monthlyRent.toLocaleString()} shall be paid on the first day of each month.
-                  A security deposit of RM {contract.depositAmount.toLocaleString()} (equivalent to 2 months rent) shall be
+                  Monthly rent of RM {localContract.monthlyRent.toLocaleString()} shall be paid on the first day of each month.
+                  A security deposit of RM {localContract.depositAmount.toLocaleString()} (equivalent to 2 months rent) shall be
                   held in escrow and released according to the terms of this agreement.
                 </p>
               </section>
@@ -226,7 +249,7 @@ export default function ViewContract() {
                 <div>
                   <p className="font-semibold mb-1">Ready to Sign</p>
                   <p className="text-sm text-muted-foreground">
-                    {contract.photosApproved
+                    {localContract.photosApproved
                       ? 'All requirements are met. You can now sign this contract using MyDigital ID.'
                       : 'Please approve the inspection photos before signing.'}
                   </p>
